@@ -1,9 +1,9 @@
 // Ported from owainlewis/machinist@3943516 internal/runner/runner.go:190-240 (MIT, Copyright (c) 2026 Owain Lewis). Deviations: the process-group kill is process_unix.go, and TypeScript on Bun (`detached` is setsid); the event cap and 1 MiB line cap follow events.go and codex_usage.go; the tool-call cap and stderr tail are the factory's own (audit finding #15).
-// The one executor: spawn any agent CLI, feed the prompt, watch its output through the preset's
-// line parser, and kill the whole process group on a timeout or a runaway tool-call count.
+// The one executor: spawn an agent CLI, feed the prompt, parse its output, kill the process group on timeout or runaway tool calls.
 
 import { crossModel } from "../review-models";
 import { tierFor } from "../core/model-tier";
+import { DEFAULT_AGENT } from "./default";
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -98,7 +98,7 @@ export function resolveRoute(
   type: string | undefined,
 ): ResolvedAgent {
   const routed = stage !== "triage" && type ? routes?.[type]?.stages?.[stage] : undefined;
-  const name = routed ?? stages[stage] ?? stages.default ?? "claude";
+  const name = routed ?? stages[stage] ?? stages.default ?? DEFAULT_AGENT;
   return resolveAgentByName(agents, name, stage);
 }
 

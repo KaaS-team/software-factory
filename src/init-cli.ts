@@ -4,9 +4,10 @@ import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { CliContext } from "./cli-runtime";
 import { UsageError } from "./cli-output";
-import { loadConfig, repoFromRemoteUrl } from "./config";
+import { DEFAULT_CONFIG, loadConfig, repoFromRemoteUrl } from "./config";
 import { fixDoctor } from "./doctor";
 import { describeStack, initConfig, isFilledIn, writeCharter } from "./init";
+import { openInitPr } from "./init-pr";
 import { installTemplate } from "./install-template";
 import { templateDir } from "./template-root";
 import { makeScm } from "./scm";
@@ -82,32 +83,9 @@ export async function cmdInit(cli: CliContext): Promise<void> {
   if (writeCharter(dir, charter, stack, repo))
     console.log(`factory init: wrote ${join(dir, ".factory", "charter.md")}`);
   if (cli.has("pr")) {
-    const git = (...a: string[]) => {
-      const r = Bun.spawnSync(["git", ...a], { cwd: dir, stdout: "pipe", stderr: "pipe" });
-      if (r.exitCode !== 0) throw new Error(`git ${a.join(" ")} failed: ${r.stderr.toString().trim()}`);
-    };
-    git("switch", "-c", "factory/init");
-    git("add", "-A", ".factory", ".claude", ".agents", "AGENTS.md");
-    git("commit", "-m", `factory: init for a ${stack.name} repo`);
-    git("push", "-u", "origin", "factory/init");
-    const pr = Bun.spawnSync(
-      [
-        "gh",
-        "pr",
-        "create",
-        "--head",
-        "factory/init",
-        "--title",
-        "factory: init",
-        "--body",
-        describeStack(stack)
-          .map((l) => `- ${l}`)
-          .join("\n"),
-      ],
-      { cwd: dir, stdout: "pipe", stderr: "pipe" },
-    );
-    if (pr.exitCode !== 0) throw new Error(`gh pr create failed: ${pr.stderr.toString().trim()}`);
-    console.log(`factory init: opened ${pr.stdout.toString().trim()}`);
+    if (!repo) throw new Error("factory init --pr: no github origin remote to open the pull request on");
+    const url = await openInitPr(dir, repo, { name: stack.name, lines: describeStack(stack) }, makeScm(DEFAULT_CONFIG));
+    console.log(`factory init: opened ${url}`);
   }
   console.log(
     `factory init: next, fill the TODOs in .factory/charter.md, then run \`factory doctor --repo-dir ${dir}\``,

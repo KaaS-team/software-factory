@@ -1,11 +1,11 @@
-// `factory doctor [--fix]`: everything the loop needs before `factory watch`
-// starts, checked once instead of failing three stages in.
+// `factory doctor [--fix]`: everything the loop needs before `factory watch`, checked once.
 
 import type { CommandRunner, ScmPort } from "./github";
 import { labelsFor } from "./labels";
 import { gateCount, type RouteConfig, type RuntimeConfig, type TrackerConfig } from "./config";
 import type { AgentConfig, StageAgents } from "./agents/types";
 import { PRESETS } from "./agents/presets";
+import { DEFAULT_AGENT } from "./agents/default";
 import { suggestSlots } from "./machine";
 import { loadWorkflow } from "./engine/workflows";
 import { MCP_REGISTRY, mcpProblems, parseMcpRegistry } from "./mcp";
@@ -170,11 +170,11 @@ export async function runDoctor(deps: DoctorDeps, ctx: DoctorContext): Promise<D
     fixable: false,
   });
   // One check per agent a stage actually uses, not one for every agent in config.
-  const agents = ctx.agents ?? { claude: { preset: "claude" } };
-  const stages = ctx.stages ?? { default: "claude" };
+  const agents = ctx.agents ?? { [DEFAULT_AGENT]: { preset: "claude" } };
+  const stages = ctx.stages ?? { default: DEFAULT_AGENT };
   // The default only counts if some stage falls back to it.
   const STAGES = ["triage", "plan", "build", "verify", "pr", "retro"] as const;
-  const used = new Set(STAGES.map((st) => stages[st] ?? stages.default ?? "claude"));
+  const used = new Set(STAGES.map((st) => stages[st] ?? stages.default ?? DEFAULT_AGENT));
   for (const name of [...used].sort()) checks.push(...(await agentChecks(name, agents, deps)));
   checks.push({
     name: "python3 on PATH",
