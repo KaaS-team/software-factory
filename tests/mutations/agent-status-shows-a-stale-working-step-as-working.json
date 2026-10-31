@@ -1,0 +1,1 @@
+{"name":"agent status shows a stale working step as working","file":"src/agent-status.ts","find":"if (r.state === \"working\" && now - r.at > timeoutMs) {","replace":"if (r.state === \"working\" && now - r.at > timeoutMs * 1e9) {","test":"tests/agent-status.test.ts"}
