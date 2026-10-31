@@ -75,9 +75,9 @@ export interface WatchDeps {
   // Runs the proof:test revert check before verify and writes proof.json; absent means verify does it by hand.
   readonly proofGit?: ProofGit;
   readonly cloneDir: string;
+  readonly pushProbe?: (worktree: string, runId: string) => Promise<import("../push-probe").ProbeResult>;
   readonly workspacesDir: string;
-  // Runs config.setup once per worktree; defaults to a real shell so tests
-  // can inject a fake instead of actually running `npm ci`.
+  // Runs config.setup once per worktree; defaults to a real shell, so tests can inject a fake.
   readonly setupRunner?: SetupRunner;
   // Absent: this process is the only worker on the repo. Present: every
   // advance holds the issue's lease (src/engine/lease.ts) for its whole run,

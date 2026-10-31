@@ -137,6 +137,24 @@ async function walk(
     }
   }
 
+  // A fresh run proves it can push before any step spends: a refusal stops it with the plain reason.
+  if (journal.finished.size === 0 && deps.pushProbe) {
+    const probe = await deps.pushProbe(worktree, `issue-${issueNumber}-${Date.now()}`);
+    if (!probe.ok) {
+      await postComment(
+        deps,
+        config,
+        issueNumber,
+        `Stopped before any work: this session cannot push (${probe.reason}). Fix the access and \`/factory retry\`.`,
+        { stage: "push-probe", json: { ok: false, reason: probe.reason } },
+      );
+      return await stopStep(deps, config, issueNumber, step.label, {
+        status: "needs-human",
+        reason: `push probe: ${probe.reason}`,
+      });
+    }
+  }
+
   try {
     for (;;) {
       // The lease lapsed and another worker may hold it now: stop here, between steps, with the label as it is.

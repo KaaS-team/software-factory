@@ -1,0 +1,1 @@
+{"name":"push probe: a failed probe lets the run go on","file":"src/engine/runner.ts","find":"if (!probe.ok) {","replace":"if (false as boolean) {","test":"tests/push-probe.test.ts"}
