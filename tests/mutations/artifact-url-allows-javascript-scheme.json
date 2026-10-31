@@ -1,0 +1,1 @@
+{"name":"artifact url allows javascript scheme","file":"src/artifact-types.ts","find":"if (u.protocol !== \"http:\" && u.protocol !== \"https:\") return undefined;","replace":"if (u.protocol === \"file:\" || u.protocol === \"data:\") return undefined;","test":"tests/artifact-types.test.ts"}
